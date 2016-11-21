@@ -1,0 +1,11 @@
+[package]
+name = "riftd"
+version = "0.1.0"
+authors = ["jerluc <jeremyalucas@gmail.com>"]
+
+[dependencies]
+clap = "2"
+env_logger = "0.3"
+log = "0.3"
+mio = "0.6.1"
+serial = "0.3"
