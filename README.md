@@ -41,12 +41,12 @@ E.g. Using a USB device on serial port `/dev/ttyUSB0` and broadcasting
 advertising packets every second:
 
 ```bash
-$ riftd --device /dev/ttyUSB0 -b 10000
+$ riftd --device /dev/ttyUSB0
 ```
 
-### Opening a socket
+## Under development
 
-TBW
+See [TODOS](TODOS.md)
 
 ## License
 
