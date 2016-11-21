@@ -6,14 +6,12 @@ use self::mio::channel::{channel, Sender, Receiver};
 use self::mio::unix::EventedFd;
 use std::io::prelude::*;
 use std::os::unix::io::AsRawFd;
-use std::time::Duration;
 
 const READ: Token = Token(0);
 const WRITE: Token = Token(1);
 
 pub struct Settings {
     pub device_name: String,
-    pub poll_interval: Option<Duration>
 }
 
 pub struct DuplexChannel {
@@ -51,7 +49,8 @@ impl DuplexChannel {
 
         // Main reactor loop
         loop {
-            match poll.poll(&mut events, self.settings.poll_interval) {
+            // TODO: What good does this timeout value really do?
+            match poll.poll(&mut events, None) {
                 Ok(num_events) if num_events > 0 => {
                     for event in events.iter() {
                         trace!("Got token: {:?}", event.token());

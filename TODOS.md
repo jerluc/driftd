@@ -13,9 +13,6 @@
   need to be transitive, and could very easily be a temporal thing.
 * **Implement ARP-style broadcast/unicast protocol** to allow for node
   discovery within range.
-* **Get CPU usage down!** It seems that potentially, my use of
-  [mio](https://github.com/carllerche/mio) may be suboptimal, and could
-  be causing the heavy use of CPU in the core reactor loop.
 * **Research the creation of a simple Linux kernel module** that would
   allow us to implement the protocol as a proper socket protocol. This
   would then allow any program that can use the `socket()` syscall to

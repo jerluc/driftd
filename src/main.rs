@@ -30,20 +30,16 @@ fn main() {
              .short("p")
              .long("poll")
              .takes_value(true)
-             .default_value("1000")
+             .default_value("100")
              .help("Sets the I/O event poll interval"))
         .get_matches();
 
     let device_name = matches.value_of("DEVICE_NAME").unwrap().to_string();
-    let broadcast_interval: u64 = matches.value_of("BROADCAST").unwrap().parse().unwrap();
-    let poll_interval: Option<Duration> = match matches.value_of("POLL_INTERVAL") {
-        Some(poll_interval_str) => Some(Duration::from_millis(poll_interval_str.parse().unwrap())),
-        _ => None
-    };
+    let broadcast_interval = Duration::from_millis(matches.value_of("BROADCAST").unwrap().parse().unwrap());
+    let poll_interval = Duration::from_millis(matches.value_of("POLL_INTERVAL").unwrap().parse().unwrap());
 
     let (mut channel, tx, rx) = DuplexChannel::open(Settings {
-        device_name: device_name,
-        poll_interval: poll_interval
+        device_name: device_name
     });
     let reactor = thread::spawn(move || {
         channel.run_loop();
@@ -56,13 +52,14 @@ fn main() {
                 },
                 _ => {}
             }
+            thread::sleep(poll_interval);
         }
     });
     let sender = thread::spawn(move || {
         loop {
             let data = vec![126, 0, 16, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 4, 72, 69, 76, 76, 79, 137];
             tx.send(data).unwrap();
-            thread::sleep(Duration::from_millis(broadcast_interval));
+            thread::sleep(broadcast_interval);
         }
     });
     reactor.join().unwrap();

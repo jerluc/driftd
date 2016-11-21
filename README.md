@@ -34,7 +34,7 @@ FLAGS:
 OPTIONS:
     -b, --broadcast <BROADCAST>    Sets the node broadcast interval [default: 1000]
     -s, --device <DEVICE_NAME>     Sets the serial device to use
-    -p, --poll <POLL_INTERVAL>     Sets the I/O event poll interval [default: 1000]
+    -p, --poll <POLL_INTERVAL>     Sets the I/O event poll interval [default: 100]
 ```
 
 E.g. Using a USB device on serial port `/dev/ttyUSB0` and broadcasting
