@@ -11,7 +11,7 @@ The Rift protocol daemon
 * A Unix-based system (Windows may work, but this has not been tested)
 * [Rust and Cargo](https://www.rust-lang.org)
 * For testing with real hardware:
-  * One or more [ZigBee/XBee (Series 1) radios](https://www.sparkfun.com/products/11215) configured for API-mode
+  * One or more [ZigBee/XBee (Series 1) radios](https://www.digi.com/products/models/xb24-api-001) configured for API-mode
 
 ### Installation from source
 
