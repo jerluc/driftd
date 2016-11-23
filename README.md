@@ -1,5 +1,7 @@
 # riftd
 
+[![](https://api.travis-ci.org/jerluc/riftd.svg?branch=master)](https://travis-ci.org/jerluc/riftd)
+
 The Rift protocol daemon
 
 ## Getting started
