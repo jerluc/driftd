@@ -1,10 +1,10 @@
 #[macro_use] extern crate log;
 extern crate env_logger;
 #[macro_use] extern crate clap;
-mod channel;
+extern crate rift;
 
 use clap::{App, Arg};
-use channel::{Settings, DuplexChannel};
+use rift::channel::{Settings, DuplexChannel};
 use std::thread;
 use std::time::Duration;
 
@@ -41,9 +41,11 @@ fn main() {
     let (mut channel, tx, rx) = DuplexChannel::open(Settings {
         device_name: device_name
     });
+
     let reactor = thread::spawn(move || {
         channel.run_loop();
     });
+
     let receiver = thread::spawn(move || {
         loop {
             match rx.try_recv() {
@@ -55,6 +57,7 @@ fn main() {
             thread::sleep(poll_interval);
         }
     });
+
     let sender = thread::spawn(move || {
         loop {
             let data = vec![126, 0, 16, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 4, 72, 69, 76, 76, 79, 137];
@@ -62,6 +65,7 @@ fn main() {
             thread::sleep(broadcast_interval);
         }
     });
+
     reactor.join().unwrap();
     receiver.join().unwrap();
     sender.join().unwrap();

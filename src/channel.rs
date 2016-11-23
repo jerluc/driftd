@@ -1,11 +1,10 @@
-extern crate serial;
-extern crate mio;
-
-use self::mio::*;
-use self::mio::channel::{channel, Sender, Receiver};
-use self::mio::unix::EventedFd;
 use std::io::prelude::*;
 use std::os::unix::io::AsRawFd;
+
+use mio::*;
+use mio::channel::{channel, Sender, Receiver};
+use mio::unix::EventedFd;
+use serial::{SystemPort, open as serial_open};
 
 const READ: Token = Token(0);
 const WRITE: Token = Token(1);
@@ -16,14 +15,14 @@ pub struct Settings {
 
 pub struct DuplexChannel {
     settings: Settings,
-    device: serial::SystemPort,
+    device: SystemPort,
     tx_from_client: Receiver<Vec<u8>>,
     rx_to_client: Sender<Vec<u8>>
 }
 
 impl DuplexChannel {
     pub fn open(settings: Settings) -> (DuplexChannel, Sender<Vec<u8>>, Receiver<Vec<u8>>) {
-        let device = serial::open(&settings.device_name).unwrap();
+        let device = serial_open(&settings.device_name).unwrap();
         let (client_tx, tx_from_client): (Sender<Vec<u8>>, Receiver<Vec<u8>>) = channel();
         let (rx_to_client, client_rx): (Sender<Vec<u8>>, Receiver<Vec<u8>>) = channel();
         let channel = DuplexChannel {
