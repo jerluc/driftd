@@ -5,10 +5,16 @@ extern crate rift;
 
 use clap::{App, Arg};
 use rift::channel::{Settings, DuplexChannel};
+use rift::socket::SocketManager;
 use std::thread;
 use std::time::Duration;
 
 fn main() {
+    let mut sm = SocketManager::new("/tmp").unwrap();
+    sm.start().unwrap();
+}
+
+fn main2() {
     env_logger::init().unwrap();
     let matches = App::new("riftd")
         .version(crate_version!())

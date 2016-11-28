@@ -1,10 +1,17 @@
-use notify::{self, RecommendedWatcher, Watcher, RecursiveMode};
-use std::sync::mpsc::{channel, Receiver, RecvError};
-use std::time::Duration;
+use mio::*;
+use mio::unix::EventedFd;
+use mio::channel::{channel, Sender, Receiver};
+use mio_uds::UnixDatagram;
+use uuid::Uuid;
+use std::io::prelude::*;
+use std::os::unix::io::AsRawFd;
+use std::io::Result;
+use std::mem::transmute;
+use std::path::{Path, PathBuf};
+use std::thread::{JoinHandle, spawn};
 
-pub trait ClientHandler {
-    fn on_client_event(&self, event: ClientEvent);
-}
+const READ: Token = Token(0);
+const SERVER: Token = Token(1);
 
 #[derive(Debug)]
 pub enum ClientEvent {
@@ -13,37 +20,100 @@ pub enum ClientEvent {
     Close(u64)
 }
 
-pub struct SocketWatcher {
-    socket_dir: String,
-    watcher: RecommendedWatcher,
-    client_events: Receiver<notify::DebouncedEvent>
+pub struct SocketManager {
+    server_sock: UnixDatagram,
+    sock_dir: PathBuf,
+    client_threads: Vec<JoinHandle<()>>
 }
 
-impl SocketWatcher {
-    pub fn new(socket_dir: &str) -> notify::Result<SocketWatcher> {
-        let (tx, rx) = channel();
+impl SocketManager {
+    pub fn new<P: AsRef<Path>>(sock_dir_path: P) -> Result<Self> {
+        let server_sock_path = sock_dir_path.as_ref().join("riftd");
+        let server_sock = try!(UnixDatagram::bind(server_sock_path));
+        let sm = SocketManager {
+            server_sock: server_sock,
+            sock_dir: sock_dir_path.as_ref().to_path_buf(),
+            client_threads: Vec::new(),
+        };
+        Ok(sm)
+    }
 
-        let mut watcher: RecommendedWatcher = try!(Watcher::new(tx, Duration::from_secs(1)));
+    fn on_new_client(&mut self, dest_addr: Vec<u8>) -> Result<i32> {
+        let unique_id = Uuid::new_v4().to_string();
+        let client_sock_path = self.sock_dir.join("riftd-".to_string() + unique_id.as_ref());
+        println!("{:?}", client_sock_path);
+        let client_sock = try!(UnixDatagram::bind(client_sock_path));
+        println!("Created socket");
+        let client_fd = client_sock.as_raw_fd();
+
+        let poll = Poll::new().unwrap();
+        let mut events = Events::with_capacity(1024);
+
+        try!(poll.register(&client_sock, READ, Ready::readable(), PollOpt::level()));
+
+        let thread = spawn(move || {
+            loop {
+                match poll.poll(&mut events, None) {
+                    Ok(num_events) if num_events > 0 => {
+                        for event in events.iter() {
+                            match event.token() {
+                                READ => {
+                                    println!("Got client read event!");
+                                    let mut buf = [0; 128];
+                                    client_sock.recv(&mut buf).unwrap();
+                                    println!("Received: {:?}", buf.to_vec());
+                                },
+                                _ => unreachable!()
+                            }
+                        }
+                    },
+                    _ => unreachable!()
+                }
+            }
+        });
+        self.client_threads.push(thread);
+        Ok(client_fd)
+    }
+
+    pub fn start(&mut self) -> Result<()> {
+        let poll = try!(Poll::new());
+        let mut events = Events::with_capacity(1024);
+
+        try!(poll.register(&self.server_sock, SERVER, Ready::all(), PollOpt::level()));
         
-        try!(watcher.watch(socket_dir, RecursiveMode::NonRecursive));
+        loop {
+            match poll.poll(&mut events, None) {
+                Ok(num_events) if num_events > 0 => {
+                    for event in events.iter() {
+                        match event.token() {
+                            SERVER => {
 
-        Ok(SocketWatcher {
-            socket_dir: socket_dir.to_string(),
-            watcher: watcher,
-            client_events: rx
-        })
-    }
-
-    pub fn recv(&self) -> Result<ClientEvent, RecvError> {
-        match self.client_events.recv() {
-            Ok(event) => match event {
-                notify::DebouncedEvent::Create(path) =>
-                    Ok(ClientEvent::Open(1)),
-                notify::DebouncedEvent::Remove(path) =>
-                    Ok(ClientEvent::Close(1)),
-                _ => Ok(ClientEvent::Nop)
-            },
-            Err(e) => Err(e)
+                                if event.kind().is_readable() { 
+                                    let mut buf = [0; 8];
+                                    let (_, addr) = try!(self.server_sock.recv_from(&mut buf));
+                                    println!("Received client socket request from ({:?}): {:?}", addr, buf);
+                                    let client_fd = try!(self.on_new_client(buf.to_vec()));
+                                    let client_addr = addr.as_pathname().unwrap();
+                                    let client_fd_bytes = fd_to_bytes(client_fd);
+                                    println!("Sending back client fd: {:?}", client_fd);
+                                    try!(self.server_sock.send_to(&client_fd_bytes, client_addr));
+                                } else if !event.kind().is_writable() {
+                                    println!("Got event: {:?}", event.kind());
+                                }
+                            },
+                            _ => unreachable!()
+                        }
+                    }
+                },
+                _ => unreachable!()
+            }
         }
+
+        Ok(())
     }
+}
+
+fn fd_to_bytes(fd: i32) -> [u8; 8] {
+    let raw_bytes : [u8; 8] = unsafe { transmute(fd as u64) };
+    raw_bytes
 }
