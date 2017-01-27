@@ -1,8 +1,10 @@
-language: rust
-rust:
-    - stable
-    - beta
-    - nightly
-matrix:
-  allow_failures:
-    - rust: nightly
+language: go
+go:
+  - 1.7
+
+install:
+  - go get github.com/jerluc/gobee
+  - go get github.com/jerluc/serial
+  - go get github.com/songgao/water
+  - go get golang.org/x/net/ipv6
+  - go get gopkg.in/alecthomas/kingpin.v2
