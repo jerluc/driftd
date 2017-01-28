@@ -32,13 +32,22 @@ func packBytes(bas... []byte) []byte {
 	return packed
 }
 
+func trimmed(packet []byte) []byte {
+	for i, b := range packet {
+		if b == 0x00 {
+			return packet[:i]
+		}
+	}
+	return packet
+}
+
 func incoming(cidr net.IP, inbox <-chan gobee.Frame, iface *water.Interface) {
 	for {
 		packet := (<-inbox).(*gobee.Rx64Frame)
 		log.Println("Incoming packet:", packet)
 		srcPort := gobee.BytesToUint16(packet.Data[:2])
 		dstPort := gobee.BytesToUint16(packet.Data[2:4])
-		payload := packet.Data[4:]
+		payload := trimmed(packet.Data[4:])
 		srcIP := append([]byte(cidr[:8]), packet.Source...)
 
 		srcAddr := &net.UDPAddr{
@@ -110,6 +119,7 @@ func outgoing(iface *water.Interface, outbox chan<- gobee.Frame) {
 			srcPort := packet[40:42]
 			dstPort := packet[42:44]
 			dst := header.Dst[8:]
+			// TODO: Detect broadcast addressing mode
 			payload := packet[48:]
 			packet := &gobee.Tx64Frame{
 				ID: 0x00,

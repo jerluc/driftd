@@ -1,10 +1,26 @@
 language: go
 go:
-  - 1.7
+  - 1.7.3
 
-install:
+before_install:
   - go get github.com/jerluc/gobee
   - go get github.com/jerluc/serial
   - go get github.com/songgao/water
   - go get golang.org/x/net/ipv6
   - go get gopkg.in/alecthomas/kingpin.v2
+
+install:
+  - GOOS=linux GOARCH=amd64 go build -o target/riftd.linux-amd64
+  - GOOS=linux GOARCH=arm go build -o target/riftd.linux-arm
+  # TODO: Figure out how to fix the x-compilation with the serial library!
+  # - GOOS=darwin GOARCH=amd64 go build -o target/riftd.darwin-amd64
+
+deploy:
+  provider: releases
+  api_key: "$GITHUB_TOKEN"
+  file:
+    - "target/riftd.linux-amd64"
+    - "target/riftd.linux-arm"
+    # - "target/riftd.darwin-amd64"
+  overwrite: true
+  skip_cleanup: true
