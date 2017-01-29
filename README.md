@@ -9,7 +9,7 @@ The Rift protocol daemon
 ### System requirements
 
 * A Unix-based system (Windows may work, but this has not been tested)
-* [Rust and Cargo](https://www.rust-lang.org)
+* [Go](https://golang.org)
 * For testing with real hardware:
   * One or more [ZigBee/XBee (Series 1) radios](https://www.digi.com/products/models/xb24-api-001) configured for API-mode
 
@@ -20,41 +20,47 @@ The Rift protocol daemon
 git clone https://github.com/jerluc/riftd.git
 
 # Install the riftd binary
-cd riftd && cargo install --force
+cd riftd && make && make install
 ```
 
 ### Usage
 
 ```
-USAGE:
-    riftd [OPTIONS] --device <DEVICE_NAME>
+usage: riftd [<flags>] <command> [<args> ...]
 
-FLAGS:
-    -h, --help       Prints help information
-    -V, --version    Prints version information
+Rift protocol daemon
 
-OPTIONS:
-    -b, --broadcast <BROADCAST>    Sets the node broadcast interval [default: 1000]
-    -s, --device <DEVICE_NAME>     Sets the serial device to use
-    -p, --poll <POLL_INTERVAL>     Sets the I/O event poll interval [default: 100]
+Flags:
+  --help  Show context-sensitive help (also try --help-long and --help-man).
+
+Commands:
+  help [<command>...]
+    Show help.
+
+
+  run [<flags>]
+    Starts the Rift protocol daemon
+
+    --logging="INFO"          Log level
+    --iface="rift0"           Network interface name
+    --dev=/dev/ttyUSB0        Serial device name
+    --cidr=2001:412:abcd:1::  IPv6 64-bit prefix
+
+  version
+    Displays riftd version
+
+
+  configure [<flags>]
+    Configures a new device for Rift
+
+    --dev=/dev/ttyUSB0  Serial device name
 ```
-
-E.g. Using a USB device on serial port `/dev/ttyUSB0` and broadcasting
-advertising packets every second:
-
-```bash
-$ riftd --device /dev/ttyUSB0
-```
-
-## Under development
-
-See [TODOS](TODOS.md)
 
 ## License
 
 MIT License
 
-Copyright (c) 2016 Jeremy Lucas
+Copyright (c) 2017 Jeremy Lucas
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
