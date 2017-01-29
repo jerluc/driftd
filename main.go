@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -14,20 +15,35 @@ const (
 	DefaultLocalIP = "2001:412:abcd:1::"
 )
 
-var (
-	riftd = kingpin.New("riftd", "Rift protocol daemon")
-	runCmd = riftd.Command("run", "Starts the Rift protocol daemon")
-	versionCmd = riftd.Command("version", "Displays riftd version")
-	logLevel = runCmd.Flag("logging", "Log level").Default(DefaultLogLevel).String()
-	ifaceName = runCmd.Flag("iface", "Network interface name").Default(DefaultInterface).String()
-	devName = runCmd.Flag("dev", "Serial device name").Default(DefaultDevice).ExistingFile()
-	cidr = runCmd.Flag("cidr", "IPv6 64-bit prefix").Default(DefaultLocalIP).IP()
-	cfgCmd = riftd.Command("configure", "Configures a new device for Rift")
-	newDevName = cfgCmd.Flag("dev", "Serial device name").Default(DefaultDevice).ExistingFile()
-)
-
 func main() {
-	switch kingpin.MustParse(riftd.Parse(os.Args[1:])) {
+	riftd := kingpin.New("riftd", "Rift protocol daemon")
+	runCmd := riftd.Command("run", "Starts the Rift protocol daemon")
+	versionCmd := riftd.Command("version", "Displays riftd version")
+	logLevel := runCmd.Flag("logging", "Log level").
+					Default(DefaultLogLevel).
+					Enum("DEBUG", "INFO", "NOTICE", "WARNING", "ERROR", "CRITICAL")
+	ifaceName := runCmd.Flag("iface", "Network interface name").
+					Default(DefaultInterface).
+					String()
+	devName := runCmd.Flag("dev", "Serial device name").
+					Default(DefaultDevice).
+					String()
+	cidr := runCmd.Flag("cidr", "IPv6 64-bit prefix").
+					Default(DefaultLocalIP).
+					IP()
+	cfgCmd := riftd.Command("configure", "Configures a new device for Rift")
+	newDevName := cfgCmd.Flag("dev", "Serial device name").
+					Default(DefaultDevice).
+					String()
+
+	cmd, parseErr := riftd.Parse(os.Args[1:])
+	if parseErr != nil {
+		fmt.Println("riftd:", parseErr)
+		fmt.Println("Run \"riftd help [cmd]\" for help")
+		os.Exit(1)
+	}
+
+	switch cmd {
 	case runCmd.FullCommand():
 		InitLogging(*logLevel)
 

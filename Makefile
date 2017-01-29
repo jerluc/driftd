@@ -17,7 +17,7 @@ get-deps:
 build:
 	go build -o ./target/riftd -ldflags="-X main.Version=${VERSION} -X main.Commitish=${COMMITISH}"
 
-install:
+install: get-deps
 	rm -f ${GOPATH}/bin/riftd
 	go install -ldflags="-X main.Version=${VERSION} -X main.Commitish=${COMMITISH}"
 
