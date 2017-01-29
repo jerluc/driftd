@@ -4,16 +4,44 @@
 
 The Rift protocol daemon
 
+## What is Rift?
+
+Rift is a simple 802.15.4 wireless protocol for enabling peer-to-peer IPv6 communication without the
+need for any intermediary infrastructure such as routers or gateways. Using this new protocol, we
+hope to see a new future for software developers to more easily use direct wireless communications
+for applications that would benefit from the increased security, privacy, and simplicity of Rift.
+
+## What is riftd?
+
+riftd is a small daemon process which implements the Rift protocol as an IPv6 TUN device. When
+running, riftd routes incoming 802.15.4 packets from nearby peers to local UDP sockets and outgoing
+UDP packets in a specific CIDR block to their corresponding remote peer.
+
+As a simple example, given:
+
+  * Peer 0 (MAC `a:b:c:d`) running riftd with CIDR `2001:412:abcd:1::/64`, and a local UDP server
+    bound to port 8000
+  * Peer 1 (MAC `c:d:e:f`) running riftd with CIDR `2001:412:abcd:1::/64`, and a local UDP client
+
+When Peer 1 sends a UDP packet to `[2001:412:abcd:1:a:b:c:d]:8000`, riftd will route the packet over
+the 802.15.4 wireless device to riftd running on Peer 0, who then forwards the UDP packet to the
+locally-running UDP server.
+
 ## Getting started
 
-### System requirements
+### Software requirements
 
 * A Unix-based system (Windows may work, but this has not been tested)
 * [Go](https://golang.org)
-* For testing with real hardware:
-  * One or more [ZigBee/XBee (Series 1) radios](https://www.digi.com/products/models/xb24-api-001) configured for API-mode
 
-### Installating
+### Hardware requirements
+
+For testing with real hardware, you will need:
+
+  * One or more [ZigBee/XBee (Series 1) radios](https://www.digi.com/products/models/xb24-api-001)
+    configured for API-mode (exact configuration details to come)
+
+### Installation
 
 From Github.com:
 
