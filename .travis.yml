@@ -3,11 +3,7 @@ go:
   - 1.7.3
 
 before_install:
-  - go get github.com/jerluc/gobee
-  - go get github.com/jerluc/serial
-  - go get github.com/songgao/water
-  - go get golang.org/x/net/ipv6
-  - go get gopkg.in/alecthomas/kingpin.v2
+  - make get-deps
 
 install:
   - GOOS=linux GOARCH=amd64 go build -o target/riftd.linux-amd64
