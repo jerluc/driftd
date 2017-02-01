@@ -16,7 +16,11 @@ func CreateTUN(ifaceName string, cidr net.IP) io.ReadCloser {
 
 func tun(ifaceName string) *water.Interface {
 	Log.Debugf("Creating TUN device %s", ifaceName)
-    iface, err := water.NewTUN(ifaceName)
+	config := water.Config{
+        DeviceType: water.TUN,
+    }
+    config.Name = ifaceName
+    iface, err := water.New(config)
     if err != nil {
 		Log.Fatal("Failed to create TUN device:", err)
     }
