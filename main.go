@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	rift "github.com/jerluc/riftd/lib"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
@@ -45,9 +46,9 @@ func main() {
 
 	switch cmd {
 	case runCmd.FullCommand():
-		InitLogging(*logLevel)
+		rift.InitLogging(*logLevel)
 
-		xchg := NewExchange(ExchangeConfig{
+		xchg := rift.NewExchange(rift.ExchangeConfig{
 			DeviceName: *devName,
 			InterfaceName: *ifaceName,
 			CIDR: *cidr,
@@ -66,6 +67,6 @@ func main() {
 	case versionCmd.FullCommand():
 		PrintVersionInfo()
 	case cfgCmd.FullCommand():
-		ConfigureDevice(*newDevName)
+		rift.ConfigureDevice(*newDevName)
 	}
 }

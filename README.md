@@ -1,6 +1,7 @@
 # riftd
 
 [![](https://api.travis-ci.org/jerluc/riftd.svg?branch=master)](https://travis-ci.org/jerluc/riftd)
+[![GoDoc](https://godoc.org/github.com/jerluc/riftd?status.svg)](https://godoc.org/github.com/jerluc/riftd)
 
 The Rift protocol daemon
 

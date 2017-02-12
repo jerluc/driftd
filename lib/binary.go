@@ -1,4 +1,4 @@
-package main
+package lib
 
 // Turns an array of byte arrays into one
 // big byte array
