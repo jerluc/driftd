@@ -8,12 +8,23 @@ import (
 	"github.com/jerluc/serial"
 )
 
+// Configuration for the Rift packet exchange
 type ExchangeConfig struct{
+	// The serial device for the exchange to use
+	// for all TX/RX operations
 	DeviceName string
+	// The name of the TUN interface to create
 	InterfaceName string
+	// The IPv6 CIDR block for routing. Note that
+	// this should be a 64-bit prefix, as the
+	// remaining 64 bits will be consumed by the
+	// serial device's MAC address
 	CIDR net.IP
 }
 
+// The Rift packet exchange performs all vital
+// protocol functions including routing, packet
+// encapsulation and stripping, etc.
 type Exchange struct{
 	cfg ExchangeConfig
 	iface io.ReadCloser
@@ -22,6 +33,7 @@ type Exchange struct{
 	outbox chan<- gobee.Frame
 }
 
+// Creates a new Rift packet exchange
 func NewExchange(cfg ExchangeConfig) *Exchange {
 	iface := CreateTUN(cfg.InterfaceName, cfg.CIDR)
 	serialPort := openSerialPort(cfg.DeviceName)
@@ -36,6 +48,7 @@ func NewExchange(cfg ExchangeConfig) *Exchange {
 	}
 }
 
+// Gracefully shuts down the Rift exchange
 func (x *Exchange) Shutdown() {
 	Log.Info("Shutting down exchange")
 	x.iface.Close()
@@ -43,6 +56,8 @@ func (x *Exchange) Shutdown() {
 	close(x.outbox)
 }
 
+// Boots up the Rift exchange. Note that this
+// function will block indefinitely until shutdown
 func (x *Exchange) Start() {
 	Log.Info("Booting up exchange")
 	go x.incoming()
@@ -62,10 +77,19 @@ func openSerialPort(devName string) io.ReadWriteCloser {
 	return serialPort
 }
 
+// Creates the "external" IPv6 address for a given
+// MAC address
 func (x *Exchange) externalIP(mac []byte) []byte {
 	return append(x.cfg.CIDR[:8], mac...)
 }
 
+// The incoming packet loop continually processes
+// RX frames comming from the attached serial device.
+// For each received frame, a new raw IPv6 packet is
+// constructed by repacking the incoming frame, and
+// then eventually forwarded on to the host machine's
+// network stack where it is delivered to vanilla
+// UDP+IPv6 sockets.
 func (x *Exchange) incoming() {
 	Log.Debug("Started watching for incoming packets")
 	for {
@@ -97,15 +121,22 @@ func (x *Exchange) incoming() {
 	}
 }
 
-func isOutgoingPacket(header *ipv6.Header) bool {
+// Determines whether or not the IPv6 packet is
+// destined for the exchange
+func (x *Exchange) isOutgoingPacket(header *ipv6.Header) bool {
 	for i, b := range header.Dst[:4] {
-		if b != header.Src[i] {
+		if b != x.cfg.CIDR[i] {
 			return false
 		}
 	}
 	return true
 }
 
+// The outgoing packet loop continually reads IPv6
+// packets coming in from the TUN device itself. If
+// the packet is destined for the exchange CIDR, the
+// packet is repacked as a TX frame and then sent to
+// the underyling serial device
 func (x *Exchange) outgoing() {
 	Log.Debug("Started watching for outgoing packets")
     for {
@@ -121,7 +152,7 @@ func (x *Exchange) outgoing() {
 			Log.Error("Failed to parse IPv6 header:", err)
 		}
 
-		if isOutgoingPacket(header) {
+		if x.isOutgoingPacket(header) {
 			// IPv6 payload starts after 40 byte fixed-size header
 			srcPort := packet[40:42]
 			dstPort := packet[42:44]

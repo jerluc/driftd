@@ -7,6 +7,7 @@ import (
 	"syscall"
 )
 
+// Computes a UDP checksum per RFC 768
 func computeUDPChecksum(buf []byte) uint16 {
 	sum := uint32(0)
 
@@ -20,19 +21,19 @@ func computeUDPChecksum(buf []byte) uint16 {
 		sum = (sum >> 16) + (sum & 0xffff)
 	}
 	csum := ^uint16(sum)
-	/*
-	 * From RFC 768:
-	 * If the computed checksum is zero, it is transmitted as all ones (the
-	 * equivalent in one's complement arithmetic). An all zero transmitted
-	 * checksum value means that the transmitter generated no checksum (for
-	 * debugging or for higher level protocols that don't care).
-	 */
+	
+	// From RFC 768:
+	// If the computed checksum is zero, it is transmitted as all ones (the
+	// equivalent in one's complement arithmetic). An all zero transmitted
+	// checksum value means that the transmitter generated no checksum (for
+	// debugging or for higher level protocols that don't care).
 	if csum == 0 {
 		csum = 0xffff
 	}
 	return csum
 }
 
+// Constructs a raw UDP+IPv6 packet
 func BuildRawPacket(srcAddr *net.UDPAddr, dstAddr *net.UDPAddr, payload []byte) []byte {
 	buf := bytes.NewBuffer([]byte{})
 	// Source address
@@ -92,6 +93,9 @@ func BuildRawPacket(srcAddr *net.UDPAddr, dstAddr *net.UDPAddr, payload []byte) 
 	return buf.Bytes()
 }
 
+// Sends a raw packet encoded as a byte array to
+// the networking stack. Note that this may be
+// platform dependent!
 func SendRawPacket(packet []byte) error {
 	fd, err := syscall.Socket(syscall.AF_INET6, syscall.SOCK_RAW, syscall.IPPROTO_RAW)
 	if err != nil {
