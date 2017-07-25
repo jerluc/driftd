@@ -8,7 +8,7 @@ import (
 	"github.com/jerluc/serial"
 )
 
-// Configuration for the Rift packet exchange
+// Configuration for the Drift packet exchange
 type ExchangeConfig struct{
 	// The serial device for the exchange to use
 	// for all TX/RX operations
@@ -22,7 +22,7 @@ type ExchangeConfig struct{
 	CIDR net.IP
 }
 
-// The Rift packet exchange performs all vital
+// The Drift packet exchange performs all vital
 // protocol functions including routing, packet
 // encapsulation and stripping, etc.
 type Exchange struct{
@@ -33,7 +33,7 @@ type Exchange struct{
 	outbox chan<- gobee.Frame
 }
 
-// Creates a new Rift packet exchange
+// Creates a new Drift packet exchange
 func NewExchange(cfg ExchangeConfig) *Exchange {
 	iface := CreateTUN(cfg.InterfaceName, cfg.CIDR)
 	serialPort := openSerialPort(cfg.DeviceName)
@@ -48,7 +48,7 @@ func NewExchange(cfg ExchangeConfig) *Exchange {
 	}
 }
 
-// Gracefully shuts down the Rift exchange
+// Gracefully shuts down the Drift exchange
 func (x *Exchange) Shutdown() {
 	Log.Info("Shutting down exchange")
 	x.iface.Close()
@@ -56,7 +56,7 @@ func (x *Exchange) Shutdown() {
 	close(x.outbox)
 }
 
-// Boots up the Rift exchange. Note that this
+// Boots up the Drift exchange. Note that this
 // function will block indefinitely until shutdown
 func (x *Exchange) Start() {
 	Log.Info("Booting up exchange")

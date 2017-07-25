@@ -4,7 +4,7 @@ import (
 	"github.com/op/go-logging"
 )
 
-var Log = logging.MustGetLogger("riftd")
+var Log = logging.MustGetLogger("driftd")
 
 // Initializes logging facilities at the
 // given level

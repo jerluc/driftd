@@ -5,21 +5,21 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	rift "github.com/jerluc/riftd/lib"
+	drift "github.com/jerluc/driftd/lib"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 const (
 	DefaultLogLevel = "INFO"
-	DefaultInterface = "rift0"
+	DefaultInterface = "drift0"
 	DefaultDevice = "/dev/ttyUSB0"
 	DefaultLocalIP = "2001:412:abcd:1::"
 )
 
 func main() {
-	riftd := kingpin.New("riftd", "Rift protocol daemon")
-	runCmd := riftd.Command("run", "Starts the Rift protocol daemon")
-	versionCmd := riftd.Command("version", "Displays riftd version")
+	driftd := kingpin.New("driftd", "Drift protocol daemon")
+	runCmd := driftd.Command("run", "Starts the Drift protocol daemon")
+	versionCmd := driftd.Command("version", "Displays driftd version")
 	logLevel := runCmd.Flag("logging", "Log level").
 					Default(DefaultLogLevel).
 					Enum("DEBUG", "INFO", "NOTICE", "WARNING", "ERROR", "CRITICAL")
@@ -32,23 +32,23 @@ func main() {
 	cidr := runCmd.Flag("cidr", "IPv6 64-bit prefix").
 					Default(DefaultLocalIP).
 					IP()
-	cfgCmd := riftd.Command("configure", "Configures a new device for Rift")
+	cfgCmd := driftd.Command("configure", "Configures a new device for Drift")
 	newDevName := cfgCmd.Flag("dev", "Serial device name").
 					Default(DefaultDevice).
 					String()
 
-	cmd, parseErr := riftd.Parse(os.Args[1:])
+	cmd, parseErr := driftd.Parse(os.Args[1:])
 	if parseErr != nil {
-		fmt.Println("riftd:", parseErr)
-		fmt.Println("Run \"riftd help [cmd]\" for help")
+		fmt.Println("driftd:", parseErr)
+		fmt.Println("Run \"driftd help [cmd]\" for help")
 		os.Exit(1)
 	}
 
 	switch cmd {
 	case runCmd.FullCommand():
-		rift.InitLogging(*logLevel)
+		drift.InitLogging(*logLevel)
 
-		xchg := rift.NewExchange(rift.ExchangeConfig{
+		xchg := drift.NewExchange(drift.ExchangeConfig{
 			DeviceName: *devName,
 			InterfaceName: *ifaceName,
 			CIDR: *cidr,
@@ -67,6 +67,6 @@ func main() {
 	case versionCmd.FullCommand():
 		PrintVersionInfo()
 	case cfgCmd.FullCommand():
-		rift.ConfigureDevice(*newDevName)
+		drift.ConfigureDevice(*newDevName)
 	}
 }

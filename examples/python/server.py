@@ -1,7 +1,6 @@
 import socket
 
 
-BIND_ADDR = '2001:412:abcd:1::'
 BIND_ADDR = '::'
 
 

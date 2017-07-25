@@ -23,10 +23,10 @@ get-deps: $(OS)-deps
 	go get -u gopkg.in/alecthomas/kingpin.v2
 
 build:
-	go build -o ./target/riftd -ldflags="-X main.Version=${VERSION} -X main.Commitish=${COMMITISH}"
+	go build -o ./target/driftd -ldflags="-X main.Version=${VERSION} -X main.Commitish=${COMMITISH}"
 
 install: get-deps
-	rm -f ${GOPATH}/bin/riftd
+	rm -f ${GOPATH}/bin/driftd
 	go install -ldflags="-X main.Version=${VERSION} -X main.Commitish=${COMMITISH}"
 
 .PHONY: clean get-deps build install all
